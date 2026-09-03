@@ -253,6 +253,31 @@ h1, h2, p { margin-top: 0; }
 .secondary-cta { min-height: 44px; padding: 0 14px; border-radius: 11px; color: #c4d0d7; border: 1px solid var(--line); background: rgba(255,255,255,.035); font-size: 12px; }
 .secondary-cta:hover { color: var(--white); border-color: rgba(207,225,235,.3); background: rgba(255,255,255,.07); }
 .reset-button { width: 100%; margin-top: 21px; }
+.manager-access { display: flex; align-items: center; gap: 9px; margin-top: 15px; padding: 10px; border: 1px solid rgba(231,185,74,.18); border-radius: 11px; background: rgba(231,185,74,.055); }
+.manager-lock { width: 25px; height: 25px; display: grid; place-items: center; color: #1c170b; background: var(--gold); border-radius: 8px; font-weight: 800; font-size: 13px; }
+.manager-access div { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.manager-access strong { color: var(--white); font-size: 11px; }
+.manager-access div span { color: var(--muted-ink); font-size: 9px; }
+.access-live { color: #9ee0b0; font-size: 9px; padding: 4px 6px; border-radius: 6px; background: rgba(86,185,116,.11); }
+.player-manager-form { margin-top: 17px; }
+.player-manager-form label { display: block; color: #c9d5dc; font-size: 10px; margin-bottom: 7px; }
+.player-manager-input-row { display: flex; gap: 6px; direction: ltr; }
+.player-manager-input-row input, .manager-roster-row input { min-width: 0; color: var(--white); text-align: right; direction: rtl; border: 1px solid rgba(207,225,235,.14); background: rgba(5,13,20,.64); border-radius: 9px; transition: border-color .2s var(--ease-out), box-shadow .2s var(--ease-out); }
+.player-manager-input-row input { flex: 1; height: 38px; padding: 0 10px; font-size: 11px; }
+.player-manager-input-row input::placeholder, .manager-roster-row input::placeholder { color: #6f808b; }
+.player-manager-input-row input:focus, .manager-roster-row input:focus { outline: none; border-color: rgba(231,185,74,.65); box-shadow: 0 0 0 3px rgba(231,185,74,.08); }
+.manager-add-button { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; color: #1f1808; background: var(--gold); border-radius: 9px; transition: transform .16s var(--ease-out), background .18s var(--ease-out); }
+.manager-add-button:hover { background: var(--gold-soft); }
+.manager-add-button:active { transform: scale(.94); }
+.manager-add-button:disabled { cursor: not-allowed; opacity: .35; }
+.player-manager-form small { display: block; margin-top: 7px; color: var(--muted-ink); font-size: 9px; }
+.manager-roster { display: flex; flex-direction: column; gap: 6px; max-height: 190px; margin-top: 12px; overflow-y: auto; }
+.manager-roster-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 27px; align-items: center; gap: 6px; }
+.manager-roster-index { display: grid; place-items: center; width: 22px; height: 22px; color: var(--gold-soft); background: rgba(231,185,74,.08); border: 1px solid rgba(231,185,74,.18); border-radius: 6px; font-size: 10px; }
+.manager-roster-row input { width: 100%; height: 31px; padding: 0 8px; font-size: 10px; }
+.manager-roster-row button { width: 27px; height: 31px; display: grid; place-items: center; color: #9baab3; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.035); }
+.manager-roster-row button:hover { color: #ff9a84; border-color: rgba(255,138,112,.38); background: rgba(255,138,112,.07); }
+.manager-empty { padding: 12px 8px; color: #71818b; text-align: center; font-size: 10px; border: 1px dashed rgba(207,225,235,.14); border-radius: 9px; }
 
 /* Clue */
 .clue-card { min-height: 432px; padding: 22px clamp(22px, 4vw, 42px) 18px; position: relative; overflow: hidden; }
@@ -384,12 +409,14 @@ h1, h2, p { margin-top: 0; }
   .clue-heading-row { margin-top: 22px; }
   .clue-copy-wrap { min-height: 138px; }
   .clue-copy { font-size: clamp(21px, 7vw, 30px); line-height: 1.7; }
-  .players-panel { order: 2; }
-  .settings-panel { order: 3; }
+  .settings-panel { order: 2; }
+  .players-panel { order: 3; }
   .panel { padding: 17px 14px; }
   .player-list { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
   .player-row { min-height: 42px; }
   .settings-panel .setting-block { margin-top: 17px; padding-top: 15px; }
+  .manager-access { margin-top: 11px; }
+  .manager-roster { max-height: 210px; }
   .game-tip { align-items: flex-start; }
   .bottom-dock { margin-top: 14px; }
   .victory-overlay { padding: 12px; }

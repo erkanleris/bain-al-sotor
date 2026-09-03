@@ -18,7 +18,6 @@ import {
   HelpCircle,
   Info,
   Instagram,
-  Minus,
   Plus,
   RotateCcw,
   Settings2,
@@ -60,6 +59,9 @@ interface Player {
   score: number;
   color: string;
 }
+
+const normalizePlayerName = (value: string) => value.trim().replace(/\s+/g, " ");
+const playerKey = (value: string) => normalizePlayerName(value).toLocaleLowerCase("ar");
 
 function LogoLockup({ compact = false }: { compact?: boolean }) {
   return (
@@ -157,10 +159,10 @@ function PlayerPanel({
         </div>
         <span className="count-badge"><Users size={15} /> {playerCount} / 8</span>
       </div>
-      <p className="panel-hint">اضغط على اسم اللاعب عند الإجابة الصحيحة لإضافة نقطة.</p>
+      <p className="panel-hint">اضغط على اسم اللاعب عند الإجابة الصحيحة لإضافة نقطة. إضافة الأسماء متاحة لمدير اللعبة فقط.</p>
       <div className="player-list">
         {players.map((player, index) => {
-          const isActive = index < playerCount;
+          const isActive = Boolean(player.name.trim());
           return (
             <button
               key={`${player.name}-${index}`}
@@ -185,39 +187,60 @@ function PlayerPanel({
 }
 
 function SettingsPanel({
-  playerCount,
+  players,
   targetScore,
-  onPlayerCount,
+  onAddPlayer,
+  onRenamePlayer,
+  onRemovePlayer,
   onTargetScore,
   onReset,
 }: {
-  playerCount: number;
+  players: Player[];
   targetScore: number;
-  onPlayerCount: (value: number) => void;
+  onAddPlayer: (name: string) => boolean;
+  onRenamePlayer: (index: number, name: string) => boolean;
+  onRemovePlayer: (index: number) => void;
   onTargetScore: (value: number) => void;
   onReset: () => void;
 }) {
+  const [draftName, setDraftName] = useState("");
+  const activePlayers = players.filter((player) => player.name.trim());
+
+  const submitPlayer = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (onAddPlayer(draftName)) setDraftName("");
+  };
+
   return (
-    <aside className="panel settings-panel">
+    <aside className="panel settings-panel manager-panel">
       <div className="panel-heading">
         <div>
-          <span className="section-label">قبل البداية</span>
-          <h2>إعدادات اللعبة</h2>
+          <span className="section-label">صلاحيات المدير</span>
+          <h2>إدارة اللاعبين</h2>
         </div>
         <Settings2 size={21} className="heading-icon" />
       </div>
+      <div className="manager-access"><span className="manager-lock">⌘</span><div><strong>مدير اللعبة</strong><span>أنت تتحكم بالأسماء والنقاط</span></div><span className="access-live">نشط</span></div>
+      <p className="panel-hint">أضف أسماء اللاعبين قبل بدء الجولة. لا يستطيع اللاعبون إضافة أسمائهم من هذه الشاشة.</p>
 
-      <div className="setting-block">
-        <div className="setting-title-row">
-          <span>عدد اللاعبين</span>
-          <span className="setting-value">{playerCount} لاعبين</span>
+      <form className="player-manager-form" onSubmit={submitPlayer}>
+        <label htmlFor="player-name">اسم اللاعب الجديد</label>
+        <div className="player-manager-input-row">
+          <input id="player-name" value={draftName} onChange={(event) => setDraftName(event.target.value)} maxLength={18} placeholder="مثال: ليان" autoComplete="off" />
+          <button type="submit" className="manager-add-button" disabled={!draftName.trim() || activePlayers.length >= 8} aria-label="إضافة لاعب"><Plus size={18} /></button>
         </div>
-        <p>اختر من 4 إلى 8 لاعبين</p>
-        <div className="stepper">
-          <button onClick={() => onPlayerCount(Math.max(4, playerCount - 1))} aria-label="تقليل عدد اللاعبين"><Minus size={17} /></button>
-          <strong>{playerCount}</strong>
-          <button onClick={() => onPlayerCount(Math.min(8, playerCount + 1))} aria-label="زيادة عدد اللاعبين"><Plus size={17} /></button>
-        </div>
+        <small>{activePlayers.length} من 8 لاعبين مضافين</small>
+      </form>
+
+      <div className="manager-roster">
+        {players.map((player, index) => player.name.trim() ? (
+          <div className="manager-roster-row" key={`manager-${index}`}>
+            <span className="manager-roster-index">{index + 1}</span>
+            <input value={player.name} maxLength={18} aria-label={`تعديل اسم اللاعب ${index + 1}`} onChange={(event) => onRenamePlayer(index, event.target.value)} />
+            <button type="button" onClick={() => onRemovePlayer(index)} aria-label={`حذف ${player.name}`}><X size={15} /></button>
+          </div>
+        ) : null)}
+        {activePlayers.length === 0 && <div className="manager-empty">لم تتم إضافة لاعبين بعد</div>}
       </div>
 
       <div className="setting-block target-setting">
@@ -251,8 +274,8 @@ function HowToModal({ onClose }: { onClose: () => void }) {
         <div className="modal-kicker"><HelpCircle size={16} /> كيف نلعب؟</div>
         <h2 id="howto-title">ثلاث خطوات<br /><em>وتبدأ الحكاية.</em></h2>
         <div className="howto-steps">
-          <div><span>01</span><p>اقرأ التلميح بصوت واضح أمام الجميع.</p></div>
-          <div><span>02</span><p>امنح اللاعبين 30 ثانية للتفكير والتخمين.</p></div>
+          <div><span>01</span><p>يضيف مدير اللعبة أسماء المشاركين من لوحة الإدارة.</p></div>
+          <div><span>02</span><p>اقرأ التلميح وامنح اللاعبين 30 ثانية للتفكير والتخمين.</p></div>
           <div><span>03</span><p>اضغط اسم صاحب الإجابة الصحيحة لإضافة نقطة.</p></div>
         </div>
         <div className="modal-footer-note"><Info size={15} /> اللعبة الحالية تستخدم عبارات Placeholder للتصميم فقط.</div>
@@ -262,9 +285,10 @@ function HowToModal({ onClose }: { onClose: () => void }) {
 }
 
 function GameBoard() {
-  const [playerCount, setPlayerCount] = useState(8);
+  const previewMode = new URLSearchParams(window.location.search).get("preview");
   const [targetScore, setTargetScore] = useState(10);
-  const [players, setPlayers] = useState<Player[]>(() => baseNames.map((name, index) => ({ name, score: 0, color: palette[index] })));
+  const [players, setPlayers] = useState<Player[]>(() => previewMode === "game" || previewMode === "win" ? baseNames.map((name, index) => ({ name, score: 0, color: palette[index] })) : palette.map((color) => ({ name: "", score: 0, color })));
+  const playerCount = players.filter((player) => player.name.trim()).length;
   const [seconds, setSeconds] = useState(30);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -290,14 +314,66 @@ function GameBoard() {
   }, [winner]);
 
   const nextQuestion = () => {
+    if (playerCount < 4) {
+      toast("أضف 4 لاعبين على الأقل قبل بدء الجولة", { icon: <Info size={15} /> });
+      return;
+    }
     setQuestionIndex((index) => index + 1);
     setSeconds(30);
     setAnswer("");
     toast("تم الانتقال إلى سؤال جديد", { icon: <Check size={15} /> });
   };
 
+  const addPlayer = (rawName: string) => {
+    const name = normalizePlayerName(rawName);
+    if (!name) {
+      toast("اكتب اسم اللاعب أولا", { icon: <Info size={15} /> });
+      return false;
+    }
+    if (name.length < 2) {
+      toast("يجب أن يتكون الاسم من حرفين على الأقل", { icon: <Info size={15} /> });
+      return false;
+    }
+    if (playerCount >= 8) {
+      toast("اكتمل عدد اللاعبين", { icon: <Info size={15} /> });
+      return false;
+    }
+    if (players.some((player) => playerKey(player.name) === playerKey(name))) {
+      toast("هذا الاسم مضاف مسبقا", { icon: <Info size={15} /> });
+      return false;
+    }
+    setPlayers((current) => {
+      const emptyIndex = current.findIndex((player) => !player.name.trim());
+      if (emptyIndex < 0) return current;
+      return current.map((player, index) => index === emptyIndex ? { ...player, name } : player);
+    });
+    toast(`تمت إضافة ${name}`, { icon: <Check size={15} /> });
+    return true;
+  };
+
+  const renamePlayer = (index: number, rawName: string) => {
+    const name = normalizePlayerName(rawName);
+    if (!name) {
+      setPlayers((current) => current.map((player, playerIndex) => playerIndex === index ? { ...player, name: "", score: 0 } : player));
+      return true;
+    }
+    if (name.length < 2) return false;
+    if (players.some((player, playerIndex) => playerIndex !== index && playerKey(player.name) === playerKey(name))) {
+      toast("لا يمكن تكرار اسم لاعب", { icon: <Info size={15} /> });
+      return false;
+    }
+    setPlayers((current) => current.map((player, playerIndex) => playerIndex === index ? { ...player, name } : player));
+    return true;
+  };
+
+  const removePlayer = (index: number) => {
+    const removedName = players[index]?.name;
+    setPlayers((current) => current.map((player, playerIndex) => playerIndex === index ? { ...player, name: "", score: 0 } : player));
+    if (removedName) toast(`تم حذف ${removedName}`, { icon: <X size={15} /> });
+  };
+
   const awardPoint = (index: number) => {
-    if (winner || index >= playerCount) return;
+    if (winner || !players[index]?.name.trim()) return;
     const updated = players.map((player, playerIndex) => playerIndex === index ? { ...player, score: player.score + 1 } : player);
     const updatedWinner = updated[index];
     setPlayers(updated);
@@ -309,12 +385,12 @@ function GameBoard() {
   };
 
   const resetGame = () => {
-    setPlayers(baseNames.map((name, index) => ({ name, score: 0, color: palette[index] })));
+    setPlayers((current) => current.map((player) => ({ ...player, score: 0 })));
     setSeconds(30);
     setQuestionIndex(0);
     setAnswer("");
     setWinner(null);
-    toast("تمت إعادة ضبط الجولة", { icon: <RotateCcw size={15} /> });
+    toast("تمت إعادة ضبط الجولة مع الاحتفاظ بأسماء اللاعبين", { icon: <RotateCcw size={15} /> });
   };
 
   const copyClue = async () => {
@@ -345,7 +421,7 @@ function GameBoard() {
       </section>
 
       <div className="game-layout">
-        <SettingsPanel playerCount={playerCount} targetScore={targetScore} onPlayerCount={setPlayerCount} onTargetScore={setTargetScore} onReset={resetGame} />
+        <SettingsPanel players={players} targetScore={targetScore} onAddPlayer={addPlayer} onRenamePlayer={renamePlayer} onRemovePlayer={removePlayer} onTargetScore={setTargetScore} onReset={resetGame} />
 
         <section className="clue-card" aria-labelledby="clue-heading">
           <div className="clue-card-topline"><span className="question-index">السؤال <b>{String(questionIndex + 1).padStart(2, "0")}</b></span><span className="live-pill"><i /> جولة مباشرة</span></div>
@@ -365,7 +441,7 @@ function GameBoard() {
         <PlayerPanel players={players} playerCount={playerCount} targetScore={targetScore} onAward={awardPoint} />
       </div>
 
-      <div className="game-tip"><div className="tip-icon"><Zap size={18} /></div><p>عند الإجابة الصحيحة اضغط على اسم اللاعب لإضافة نقطة. السؤال سيتغير تلقائيًا بعد كل إجابة أو عند انتهاء الوقت.</p></div>
+      <div className="game-tip"><div className="tip-icon"><Zap size={18} /></div><p>مدير اللعبة يضيف الأسماء من لوحة الإدارة، ثم يضغط على اسم اللاعب عند الإجابة الصحيحة لإضافة نقطة. السؤال سيتغير تلقائيًا بعد كل إجابة أو عند انتهاء الوقت.</p></div>
 
       <nav className="bottom-dock" aria-label="تنقل مساعد">
         <button className="dock-item dock-item--active" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><span className="dock-dot" /><span>اللعبة</span></button>
