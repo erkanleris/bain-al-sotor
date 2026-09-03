@@ -201,6 +201,11 @@ h1, h2, p { margin-top: 0; }
 .summary-target { justify-content: flex-start; }
 .summary-target .summary-chevron { color: var(--muted-ink); margin-inline-start: auto; }
 .timer { justify-self: center; display: flex; align-items: center; gap: 16px; direction: ltr; }
+.timer-toggle { width: 31px; height: 31px; flex: 0 0 31px; display: grid; place-items: center; color: #b8c6ce; border: 1px solid rgba(207,225,235,.18); border-radius: 50%; background: rgba(255,255,255,.045); transition: transform .16s var(--ease-out), color .18s var(--ease-out), border-color .18s var(--ease-out), background .18s var(--ease-out); }
+.timer-toggle:hover { color: var(--gold-soft); border-color: rgba(231,185,74,.55); background: rgba(231,185,74,.09); }
+.timer-toggle:active { transform: scale(.92); }
+.timer-toggle--running { color: #1e1808; border-color: var(--gold); background: var(--gold); }
+.timer-toggle--running:hover { color: #1e1808; background: var(--gold-soft); }
 .timer-ring { width: 84px; height: 84px; border-radius: 50%; padding: 6px; transform: rotate(-10deg); transition: background .3s var(--ease-out); }
 .timer-inner { height: 100%; width: 100%; border-radius: 50%; background: #0c1721; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(10deg); }
 .timer-inner strong { color: var(--white); font-family: "Noto Kufi Arabic", sans-serif; font-size: 29px; line-height: 1; }

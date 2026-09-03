@@ -15,6 +15,8 @@ import {
   Copy,
   Crown,
   Gift,
+  Pause,
+  Play,
   HelpCircle,
   Info,
   Instagram,
@@ -131,10 +133,13 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
   );
 }
 
-function Timer({ seconds }: { seconds: number }) {
+function Timer({ seconds, isRunning, onToggle }: { seconds: number; isRunning: boolean; onToggle: () => void }) {
   const progress = Math.max(0, Math.min(100, (seconds / 30) * 100));
   return (
-    <div className={`timer ${seconds <= 8 ? "timer--urgent" : ""}`} aria-label={`متبقي ${seconds} ثانية`}>
+    <div className={`timer ${seconds <= 8 && isRunning ? "timer--urgent" : ""}`} aria-label={`${isRunning ? "المؤقت يعمل" : "المؤقت متوقف"}، متبقي ${seconds} ثانية`}>
+      <button className={`timer-toggle ${isRunning ? "timer-toggle--running" : ""}`} onClick={onToggle} aria-pressed={isRunning} aria-label={isRunning ? "إيقاف المؤقت" : "تشغيل المؤقت"} title={isRunning ? "إيقاف المؤقت" : "تشغيل المؤقت"}>
+        {isRunning ? <Pause size={15} /> : <Play size={15} />}
+      </button>
       <div className="timer-ring" style={{ background: `conic-gradient(var(--gold) ${progress * 3.6}deg, rgba(255,255,255,.10) 0deg)` }}>
         <div className="timer-inner">
           <strong>{seconds}</strong>
@@ -142,8 +147,8 @@ function Timer({ seconds }: { seconds: number }) {
         </div>
       </div>
       <div className="timer-copy">
-        <span>وقت السؤال</span>
-        <strong>{seconds <= 8 ? "اقتربت النهاية" : "فكر بسرعة"}</strong>
+        <span>{isRunning ? "المؤقت يعمل" : "المؤقت متوقف"}</span>
+        <strong>{isRunning && seconds <= 8 ? "اقتربت النهاية" : isRunning ? "فكر بسرعة" : "اضغط للتشغيل"}</strong>
       </div>
     </div>
   );
@@ -300,6 +305,7 @@ function GameBoard() {
   const [players, setPlayers] = useState<Player[]>(() => previewMode === "game" || previewMode === "win" ? baseNames.map((name, index) => ({ name, score: 0, color: palette[index] })) : palette.map((color) => ({ name: "", score: 0, color })));
   const playerCount = players.filter((player) => player.name.trim()).length;
   const [seconds, setSeconds] = useState(30);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [winner, setWinner] = useState<Player | null>(() => new URLSearchParams(window.location.search).get("preview") === "win" ? { name: "أحمد", score: 10, color: palette[0] } : null);
@@ -309,20 +315,33 @@ function GameBoard() {
   const currentClue = currentRound.clue;
 
   useEffect(() => {
-    if (winner || playerCount < 4) return;
+    if (winner || playerCount < 4 || !isTimerRunning) return;
     const interval = window.setInterval(() => {
       setSeconds((current) => {
         if (current <= 1) {
           setQuestionIndex((index) => index + 1);
           setAnswer("");
-          toast("انتهى الوقت — سؤال جديد جاهز", { icon: <RotateCcw size={15} /> });
+          setIsTimerRunning(false);
+          toast("انتهى الوقت — أوقفنا المؤقت للسؤال الجديد", { icon: <RotateCcw size={15} /> });
           return 30;
         }
         return current - 1;
       });
     }, 1000);
     return () => window.clearInterval(interval);
-  }, [winner, playerCount]);
+  }, [winner, playerCount, isTimerRunning]);
+
+  const toggleTimer = () => {
+    if (!isTimerRunning && playerCount < 4) {
+      toast("أضف 4 لاعبين على الأقل قبل تشغيل المؤقت", { icon: <Info size={15} /> });
+      return;
+    }
+    setIsTimerRunning((running) => {
+      const nextState = !running;
+      toast(nextState ? "بدأ مؤقت السؤال" : "تم إيقاف المؤقت مؤقتا", { icon: nextState ? <Play size={15} /> : <Pause size={15} /> });
+      return nextState;
+    });
+  };
 
   const submitAnswer = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -415,6 +434,7 @@ function GameBoard() {
   const resetGame = () => {
     setPlayers((current) => current.map((player) => ({ ...player, score: 0 })));
     setSeconds(30);
+    setIsTimerRunning(false);
     setQuestionIndex(0);
     setAnswer("");
     setWinner(null);
@@ -444,7 +464,7 @@ function GameBoard() {
 
       <section className="game-summary" aria-label="ملخص الجولة">
         <div className="summary-cell summary-players"><Users size={21} /><div><strong>{playerCount} / 8</strong><span>اللاعبون</span></div></div>
-        <Timer seconds={seconds} />
+        <Timer seconds={seconds} isRunning={isTimerRunning} onToggle={toggleTimer} />
         <div className="summary-cell summary-target"><Trophy size={22} /><div><strong>{targetScore}</strong><span>نقاط للفوز</span></div><ChevronDown size={18} className="summary-chevron" /></div>
       </section>
 
@@ -458,9 +478,9 @@ function GameBoard() {
             <p className="clue-copy">{currentClue}</p>
           </div>
           <button className="copy-button" onClick={copyClue}><Copy size={17} /> نسخ العبارة</button>
-          <div className="answer-divider"><span>الإجابة</span></div>
+          <div className="answer-divider"><span>إجابة السؤال</span></div>
           <form className="answer-form" onSubmit={submitAnswer}>
-            <input value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="اكتب الإجابة هنا…" aria-label="الإجابة" />
+            <input value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="اكتب إجابة السؤال هنا…" aria-label="إجابة السؤال" />
             <button type="submit" className="answer-submit" aria-label="تحقق وانتقل للسؤال التالي"><ArrowLeft size={18} /></button>
           </form>
           <button className="next-question" onClick={nextQuestion}><span>سؤال جديد</span><ChevronLeft size={17} /></button>
