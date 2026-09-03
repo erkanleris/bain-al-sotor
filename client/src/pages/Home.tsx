@@ -29,10 +29,12 @@ import {
   Zap,
 } from "lucide-react";
 
-const LOGO_URL = "/manus-storage/bain-mark-clean_7421c5ab.png";
-const AVATAR_URL = "/manus-storage/erkan-avatar_6d3ff5a9.png";
-const REWARD_URL = "/manus-storage/erkan-reward_88b6a12e.png";
-const TEXTURE_URL = "/manus-storage/bain-texture_e867f56b.png";
+const IS_GITHUB_PAGES = import.meta.env.BASE_URL !== "/";
+const ASSET_URL = (githubPath: string, storagePath: string) => IS_GITHUB_PAGES ? `${import.meta.env.BASE_URL}${githubPath}` : storagePath;
+const LOGO_URL = ASSET_URL("github-assets/bain-al-sotor-logo.png", "/manus-storage/bain-al-sotor-logo_ce3cd31a.png");
+const AVATAR_URL = ASSET_URL("github-assets/erkan-avatar.png", "/manus-storage/erkan-avatar_6d3ff5a9.png");
+const REWARD_URL = ASSET_URL("github-assets/erkan-reward.png", "/manus-storage/erkan-reward_88b6a12e.png");
+const TEXTURE_URL = ASSET_URL("github-assets/bain-texture.png", "/manus-storage/bain-texture_e867f56b.png");
 
 const palette = [
   "#E7B94A",
@@ -384,6 +386,7 @@ function VictoryScreen({ winner, targetScore, onNewGame }: { winner: Player; tar
       <div className="victory-confetti victory-confetti--two">✧</div>
       <div className="victory-confetti victory-confetti--three">✦</div>
       <section className="victory-card" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+        <img src={LOGO_URL} alt="شعار بين السطور" className="victory-logo" />
         <div className="victory-badge"><Trophy size={18} /><span>نهاية الجولة</span></div>
         <div className="victory-trophy"><Crown size={31} /><span>الفائز</span></div>
         <h2 id="victory-title">مبروك يا <em>{winner.name}</em></h2>
