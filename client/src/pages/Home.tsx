@@ -47,12 +47,22 @@ const palette = [
 ];
 
 const baseNames = ["أحمد", "سارة", "محمد", "علي", "نور", "خالد", "لينا", "يوسف"];
-const placeholderClues = [
-  "التلميح التجريبي سيظهر هنا…",
-  "عبارة Placeholder لجولة جديدة…",
-  "المعنى مخبأ بين السطور…",
-  "سؤال تجريبي ينتظر إجابتكم…",
+const clueDeck = [
+  { clue: "أظهر بلا موعد، لا أُرى لكن أُلاحظ، أرتبط بما حدث، قد أبقى بعد انتهائه", answer: "الأثر" },
+  { clue: "أعود إليك دون أن أتحرك، أحتاج مكانًا مناسبًا، أكرر ما لا أملكه، أضعف كلما ابتعدت", answer: "الصدى" },
+  { clue: "أُفهم دون كلام، قد أكون صحيحًا أو خادعًا، أظهر من التفاصيل، وأحيانًا أسبق الحقيقة", answer: "الانطباع" },
+  { clue: "أختفي حين تقترب، أظهر من بعيد، لا أملك مكانًا ثابتًا، وقد تخدعك رؤيتي", answer: "السراب" },
+  { clue: "أزداد دون أن أكبر، أُلاحظ عندما ينقص غيري، لا أملك شكلًا محددًا، وقد يملؤني شيء واحد", answer: "الفراغ" },
+  { clue: "أُبنى ببطء، أسقط بسرعة، لا أُرى لكنني أؤثر، وأعيش بين شخصين", answer: "الثقة" },
+  { clue: "لا أبدأ من نفسي، أحتاج سببًا، قد أغيّر النتيجة، وأحيانًا أختبئ خلف التفاصيل", answer: "السبب" },
+  { clue: "أملك قيمة دون سعر، قد أُعطى ولا أُسترد، أرتبط بالمستقبل، وكسرِي أسهل من حفظي", answer: "الوعد" },
+  { clue: "لا أملك صوتًا، لكنني قد أقول الكثير، أظهر في اللحظة الخطأ، وقد يكون غيابي إجابة", answer: "الصمت" },
+  { clue: "أكون حاضرًا دون وجودي، أعيش في العقل، قد يتغير شكلي مع الزمن، وأحيانًا يكون أقوى من الواقع", answer: "الذكرى" },
 ];
+
+const normalizeAnswer = (value: string) => normalizePlayerName(value)
+  .replace(/[ًٌٍَُِّْـ]/g, "")
+  .replace(/[أإآ]/g, "ا");
 
 interface Player {
   name: string;
@@ -278,7 +288,7 @@ function HowToModal({ onClose }: { onClose: () => void }) {
           <div><span>02</span><p>اقرأ التلميح وامنح اللاعبين 30 ثانية للتفكير والتخمين.</p></div>
           <div><span>03</span><p>اضغط اسم صاحب الإجابة الصحيحة لإضافة نقطة.</p></div>
         </div>
-        <div className="modal-footer-note"><Info size={15} /> اللعبة الحالية تستخدم عبارات Placeholder للتصميم فقط.</div>
+          <div className="modal-footer-note"><Info size={15} /> أضيفت عشر جولات لغزية، وإجابة كل تلميح هي كلمته الأخيرة.</div>
       </section>
     </div>
   );
@@ -295,10 +305,11 @@ function GameBoard() {
   const [winner, setWinner] = useState<Player | null>(() => new URLSearchParams(window.location.search).get("preview") === "win" ? { name: "أحمد", score: 10, color: palette[0] } : null);
   const [showHowTo, setShowHowTo] = useState(false);
 
-  const currentClue = useMemo(() => placeholderClues[questionIndex % placeholderClues.length], [questionIndex]);
+  const currentRound = useMemo(() => clueDeck[questionIndex % clueDeck.length], [questionIndex]);
+  const currentClue = currentRound.clue;
 
   useEffect(() => {
-    if (winner) return;
+    if (winner || playerCount < 4) return;
     const interval = window.setInterval(() => {
       setSeconds((current) => {
         if (current <= 1) {
@@ -311,7 +322,24 @@ function GameBoard() {
       });
     }, 1000);
     return () => window.clearInterval(interval);
-  }, [winner]);
+  }, [winner, playerCount]);
+
+  const submitAnswer = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (playerCount < 4) {
+      toast("أضف 4 لاعبين على الأقل قبل بدء الجولة", { icon: <Info size={15} /> });
+      return;
+    }
+    if (!answer.trim()) {
+      toast("اكتب إجابتك أولا", { icon: <Info size={15} /> });
+      return;
+    }
+    const isCorrect = normalizeAnswer(answer) === normalizeAnswer(currentRound.answer);
+    toast(isCorrect ? `إجابة صحيحة: ${currentRound.answer}` : `ليست الإجابة المطلوبة — كانت: ${currentRound.answer}`, { icon: isCorrect ? <Check size={15} /> : <Info size={15} /> });
+    setQuestionIndex((index) => index + 1);
+    setSeconds(30);
+    setAnswer("");
+  };
 
   const nextQuestion = () => {
     if (playerCount < 4) {
@@ -431,9 +459,9 @@ function GameBoard() {
           </div>
           <button className="copy-button" onClick={copyClue}><Copy size={17} /> نسخ العبارة</button>
           <div className="answer-divider"><span>الإجابة</span></div>
-          <form className="answer-form" onSubmit={(event) => { event.preventDefault(); nextQuestion(); }}>
+          <form className="answer-form" onSubmit={submitAnswer}>
             <input value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="اكتب الإجابة هنا…" aria-label="الإجابة" />
-            <button type="submit" className="answer-submit" aria-label="سؤال جديد"><ArrowLeft size={18} /></button>
+            <button type="submit" className="answer-submit" aria-label="تحقق وانتقل للسؤال التالي"><ArrowLeft size={18} /></button>
           </form>
           <button className="next-question" onClick={nextQuestion}><span>سؤال جديد</span><ChevronLeft size={17} /></button>
         </section>
